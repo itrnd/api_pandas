@@ -15,12 +15,19 @@ def compute_age(birth_date):
 class AgeStats(APIView):
 
     def get(self, request):
+        accepted_queries = ["industry"]
         query_by = self.request.query_params.get("query_by")
         if not query_by:
             return response.Response(
                 data={"msg": "Missing <query_by> parameter"},
                 status=status.HTTP_400_BAD_REQUEST
             )
+        if query_by not in accepted_queries:
+            return response.Response(
+                data={"msg": "Unsupported <query_by> parameter"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         queryset = Professional.objects.values_list(query_by, 'date_of_birth')
         df = read_frame(queryset, fieldnames=[query_by, 'date_of_birth'])
         df['age'] = df.apply(lambda row: compute_age(row.date_of_birth), axis=1)
@@ -30,10 +37,16 @@ class AgeStats(APIView):
 
 class SalaryStats(APIView):
     def get(self, request):
+        accepted_queries = ["industry", "years_of_experience"]
         query_by = self.request.query_params.get("query_by")
         if not query_by:
             return response.Response(
                 data={"msg": "Missing <query_by> parameter"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        if query_by not in accepted_queries:
+            return response.Response(
+                data={"msg": "Unsupported <query_by> parameter"},
                 status=status.HTTP_400_BAD_REQUEST
             )
         queryset = Professional.objects.values_list(query_by, 'salary')
